@@ -1,21 +1,22 @@
 import { Request, Response, NextFunction } from 'express'
 import { serialize } from '../plugins/serialize'
 import pool from '../database/db'
-import { iRawCourse, iCourse } from '../interfaces/interfaces'
+import { iCourse } from '../interfaces/interfaces'
 
-const getGPA = (allGrades: Array<iRawCourse>, studentId: string) => {
-  let courseCount = 0
+const studentNameIsFound = (course: iCourse, studentQuery: string) => {
+  const nameRaw =
+    course.firstName +
+    ' ' +
+    (course.middleName ? course.middleName + ' ' : '') +
+    course.lastName
+  const nameLowerCase = nameRaw.toLowerCase()
+  return nameLowerCase.includes(studentQuery)
+}
 
-  let gpaSum = 0
-
-  allGrades.forEach((grade) => {
-    if (studentId === grade.studentId) {
-      courseCount++
-      gpaSum = gpaSum + grade.grade
-    }
-  })
-
-  return gpaSum / courseCount
+const courseNameIsFound = (course: iCourse, courseQuery: string) => {
+  const courseRaw = course.courseName
+  const nameLowerCase = courseRaw.toLowerCase()
+  return nameLowerCase.includes(courseQuery)
 }
 
 const getAllEnrolledCourses = async (
@@ -24,7 +25,8 @@ const getAllEnrolledCourses = async (
   next: NextFunction
 ) => {
   try {
-    const student = req.body?.student ?? ''
+    const studentQuery = req.body?.student ?? ''
+    const courseQuery = req.body?.course ?? ''
 
     let QUERY = `
       SELECT enrolled_courses.id, courses.name AS course_name, semesters.name AS semester_name, students.first_name, students.middle_name, students.last_name, grade
@@ -38,15 +40,12 @@ const getAllEnrolledCourses = async (
     const allEnrolledCourses = serialize(allEnrolledCoursesRaw.rows)
 
     let filteredCourses = allEnrolledCourses
-    if (student.length > 0) {
+    if (studentQuery.length > 0 || courseQuery.length > 0) {
       filteredCourses = filteredCourses.filter((course: iCourse) => {
-        const nameRaw =
-          course.firstName +
-          ' ' +
-          (course.middleName ? course.middleName + ' ' : '') +
-          course.lastName
-        const nameLowerCase = nameRaw.toLowerCase()
-        return nameLowerCase.includes(student)
+        return (
+          studentNameIsFound(course, studentQuery) &&
+          courseNameIsFound(course, courseQuery)
+        )
       })
     }
 
