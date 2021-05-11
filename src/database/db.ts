@@ -1,15 +1,15 @@
 const Pool = require('pg').Pool
 
-import db from './.db.config'
+import dbConfig from './.db.config'
 
 const pool = new Pool({
-  user: db.user,
-  password: db.password,
-  database: db.database,
-  host: db.host,
-  port: db.port,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  host: dbConfig.host,
+  port: dbConfig.port,
   ssl: {
-    rejectUnauthorized: db.ssl.rejectUnauthorized,
+    rejectUnauthorized: dbConfig.ssl.rejectUnauthorized,
   },
 })
 

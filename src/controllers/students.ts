@@ -1,24 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
+import { serialize } from '../plugins/serialize'
 import pool from '../database/db'
+import { iStudentRaw, iRawCourse } from '../interfaces/interfaces'
 
-interface StudentRaw {
-  id: string
-  studentPublicId: string
-  email: string
-  firstName: string
-  middleName: string
-  lastName: string
-}
-
-interface RawGrades {
-  id: string
-  courseId: string
-  studentId: string
-  semesterId: string
-  grade: number
-}
-
-const getGPA = (allGrades: Array<RawGrades>, studentId: string) => {
+const getGPA = (allGrades: Array<iRawCourse>, studentId: string) => {
   let courseCount = 0
 
   let gpaSum = 0
@@ -41,12 +26,12 @@ const getAllStudents = async (
   try {
     const allStudentsRaw = await pool.query('SELECT * FROM students')
 
-    const allStudentsRows = allStudentsRaw.rows
+    const allStudentsRows = serialize(allStudentsRaw.rows)
 
     const allGradesRaw = await pool.query('SELECT * FROM enrolled_courses')
-    const allGrades = allGradesRaw.rows
+    const allGrades = serialize(allGradesRaw.rows)
 
-    const allStudents = allStudentsRows.map((student: StudentRaw) => {
+    const allStudents = allStudentsRows.map((student: iStudentRaw) => {
       const cummulativeGPA = getGPA(allGrades, student.id)
 
       return {
