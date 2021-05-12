@@ -1,23 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import { serialize } from '../plugins/serialize'
 import pool from '../database/db'
-import { iCourse } from '../interfaces/interfaces'
-
-const studentNameIsFound = (course: iCourse, studentQuery: string) => {
-  const nameRaw =
-    course.firstName +
-    ' ' +
-    (course.middleName ? course.middleName + ' ' : '') +
-    course.lastName
-  const nameLowerCase = nameRaw.toLowerCase()
-  return nameLowerCase.includes(studentQuery)
-}
-
-const courseNameIsFound = (course: iCourse, courseQuery: string) => {
-  const courseRaw = course.courseName
-  const nameLowerCase = courseRaw.toLowerCase()
-  return nameLowerCase.includes(courseQuery)
-}
+import { iEnrolledCourse } from '../interfaces/interfaces'
+import { combinedStudentAndOrCourseIsFound } from '../plugins/searchHelpers'
 
 const getAllEnrolledCourses = async (
   req: Request,
@@ -25,8 +10,7 @@ const getAllEnrolledCourses = async (
   next: NextFunction
 ) => {
   try {
-    const studentQuery = req.body?.student ?? ''
-    const courseQuery = req.body?.course ?? ''
+    const combinedQuery = req.body?.combinedQuery ?? ''
 
     let QUERY = `
       SELECT enrolled_courses.id, courses.name AS course_name, semesters.name AS semester_name, students.first_name, students.middle_name, students.last_name, grade
@@ -40,13 +24,15 @@ const getAllEnrolledCourses = async (
     const allEnrolledCourses = serialize(allEnrolledCoursesRaw.rows)
 
     let filteredCourses = allEnrolledCourses
-    if (studentQuery.length > 0 || courseQuery.length > 0) {
-      filteredCourses = filteredCourses.filter((course: iCourse) => {
-        return (
-          studentNameIsFound(course, studentQuery) &&
-          courseNameIsFound(course, courseQuery)
-        )
-      })
+    if (combinedQuery.length > 0) {
+      filteredCourses = filteredCourses.filter(
+        (enrolledCourse: iEnrolledCourse) => {
+          return combinedStudentAndOrCourseIsFound(
+            enrolledCourse,
+            combinedQuery
+          )
+        }
+      )
     }
 
     return res.status(200).json(filteredCourses)

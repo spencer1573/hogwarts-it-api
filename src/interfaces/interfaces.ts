@@ -7,7 +7,16 @@ export interface iStudentRaw {
   lastName: string
 }
 
-export interface iRawCourse {
+export interface iStudent {
+  id: string
+  studentPublicId?: string
+  email?: string
+  firstName: string
+  middleName: string
+  lastName: string
+}
+
+export interface iRawEnrolledCourse {
   id: string
   courseId: string
   studentId: string
@@ -15,7 +24,7 @@ export interface iRawCourse {
   grade: number
 }
 
-export interface iCourse {
+export interface iEnrolledCourse {
   id: string
   courseName: string
   semesterName: string
@@ -23,4 +32,9 @@ export interface iCourse {
   middleName: string
   lastName: string
   grade: number
+}
+
+export interface iCourse {
+  id?: string
+  name: string
 }

@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import { serialize } from '../plugins/serialize'
 import pool from '../database/db'
-import { iStudentRaw, iRawCourse } from '../interfaces/interfaces'
+import { iStudentRaw, iRawEnrolledCourse } from '../interfaces/interfaces'
 
-const getGPA = (allGrades: Array<iRawCourse>, studentId: string) => {
+const getGPA = (allGrades: Array<iRawEnrolledCourse>, studentId: string) => {
   let courseCount = 0
 
   let gpaSum = 0
