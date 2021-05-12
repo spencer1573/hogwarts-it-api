@@ -1,10 +1,10 @@
 {
-  "name": "hogwars-it",
+  "name": "hogwarts-it",
   "version": "1.0.0",
   "description": "hogwarts-it",
   "main": "src/app.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "rm -rf dist/ && prettier --write src/ && tsc",
     "dev": "nodemon ./src/app.ts"
   },
@@ -21,6 +21,10 @@
   "devDependencies": {
     "@types/body-parser": "^1.19.0",
     "@types/dotenv": "^8.2.0",
-    "@types/express": "^4.17.11"
+    "@types/express": "^4.17.11",
+    "@types/jest": "^26.0.23",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.6",
+    "typescript": "^4.2.4"
   }
 }
