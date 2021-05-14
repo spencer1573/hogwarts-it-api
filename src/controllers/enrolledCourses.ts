@@ -20,31 +20,33 @@ const getAllEnrolledCourses = async (
       JOIN semesters ON (enrolled_courses.semester_id = semesters.id)
     `
 
-    // WHERE coalesce(students.first_name, '') || ' ' || coalesce(students.middle_name, '')  || coalesce(students.last_name, '')
-    if (combinedQuery.length > 0) {
-      COMBINED_QUERY = `
-        ${COMBINED_QUERY}
-        WHERE coalesce(students.first_name, '') || ' ' || coalesce(students.middle_name, '')  || coalesce(students.last_name, '') || ' ' || coalesce(courses.name, '')
-        ILIKE '%${combinedQuery}%'
-      `
-    }
+    // TODO put back in
+    // if (combinedQuery.length > 0) {
+    //   COMBINED_QUERY = `
+    //     ${COMBINED_QUERY}
+    //     WHERE coalesce(students.first_name, '') || ' ' || coalesce(students.middle_name, '')  || coalesce(students.last_name, '') || ' ' || coalesce(courses.name, '')
+    //     ILIKE '%${combinedQuery}%'
+    //   `
+    // }
 
     const allEnrolledCoursesRaw = await pool.query(COMBINED_QUERY)
     const allEnrolledCourses = serialize(allEnrolledCoursesRaw.rows)
 
-    // let filteredCourses = allEnrolledCourses
-    // if (combinedQuery.length > 0) {
-    //   filteredCourses = filteredCourses.filter(
-    //     (enrolledCourse: iEnrolledCourse) => {
-    //       return combinedStudentAndOrCourseIsFound(
-    //         enrolledCourse,
-    //         combinedQuery
-    //       )
-    //     }
-    //   )
-    // }
+    let filteredCourses = allEnrolledCourses
+    if (combinedQuery.length > 0) {
+      filteredCourses = filteredCourses.filter(
+        (enrolledCourse: iEnrolledCourse) => {
+          return combinedStudentAndOrCourseIsFound(
+            enrolledCourse,
+            combinedQuery
+          )
+        }
+      )
+    }
 
-    return res.status(200).json(allEnrolledCourses)
+    return res.status(200).json(filteredCourses)
+    // TODO put back in
+    // return res.status(200).json(allEnrolledCourses)
   } catch (err) {
     console.error(err.message)
     return res.json({
