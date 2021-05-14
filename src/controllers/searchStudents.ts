@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { serialize } from '../plugins/serialize'
 import pool from '../database/db'
-import { iStudentRaw } from '../interfaces/interfaces'
-import { studentNameIsFound } from '../plugins/searchHelpers'
 
 const searchStudents = async (
   req: Request,
@@ -12,15 +10,22 @@ const searchStudents = async (
   try {
     const studentQuery = req.body?.studentQuery ?? ''
 
-    const allStudentsRaw = await pool.query('SELECT * FROM students')
+    let SEARCH_STUDENTS_QUERY = `
+      SELECT * FROM students
+    `
+
+    if (studentQuery.length > 0) {
+      SEARCH_STUDENTS_QUERY = `
+        ${SEARCH_STUDENTS_QUERY}
+        WHERE coalesce(students.first_name, '') || ' ' || coalesce(students.middle_name, '')  || coalesce(students.last_name, '')
+        ILIKE '%${studentQuery}%'
+      `
+    }
+
+    const allStudentsRaw = await pool.query(SEARCH_STUDENTS_QUERY)
     const allStudentsRows = serialize(allStudentsRaw.rows)
 
-    let filteredStudents: Array<iStudentRaw> = allStudentsRows
-    filteredStudents = filteredStudents.filter((student: iStudentRaw) => {
-      return studentNameIsFound(student, studentQuery)
-    })
-
-    return res.status(200).json(filteredStudents)
+    return res.status(200).json(allStudentsRows)
   } catch (err) {
     console.error(err.message)
     return res.json({

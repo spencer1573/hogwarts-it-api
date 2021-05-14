@@ -1,12 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { serialize } from '../plugins/serialize'
 import pool from '../database/db'
-import { courseNameIsFound } from '../plugins/searchHelpers'
-
-interface iCourse {
-  id: string
-  name: string
-}
 
 const searchCourses = async (
   req: Request,
@@ -16,15 +10,22 @@ const searchCourses = async (
   try {
     const courseQuery = req.body?.courseQuery ?? ''
 
-    const allCoursesRaw = await pool.query('SELECT * FROM courses')
+    let SEARCH_COURSES_QUERY = `
+      SELECT * FROM courses
+    `
+
+    if (courseQuery.length > 0) {
+      SEARCH_COURSES_QUERY = `
+        ${SEARCH_COURSES_QUERY}
+        WHERE coalesce(courses.name, '')
+        ILIKE '%${courseQuery}%'
+      `
+    }
+
+    const allCoursesRaw = await pool.query(SEARCH_COURSES_QUERY)
     const allCoursesRows = serialize(allCoursesRaw.rows)
 
-    let filteredCourses: Array<iCourse> = allCoursesRows
-    filteredCourses = filteredCourses.filter((course: iCourse) => {
-      return courseNameIsFound(course, courseQuery)
-    })
-
-    return res.status(200).json(filteredCourses)
+    return res.status(200).json(allCoursesRows)
   } catch (err) {
     console.error(err.message)
     return res.json({

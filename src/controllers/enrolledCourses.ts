@@ -12,7 +12,7 @@ const getAllEnrolledCourses = async (
   try {
     const combinedQuery = req.body?.combinedQuery ?? ''
 
-    let QUERY = `
+    let COMBINED_QUERY = `
       SELECT enrolled_courses.id, courses.name AS course_name, semesters.name AS semester_name, students.first_name, students.middle_name, students.last_name, grade
       FROM enrolled_courses
       JOIN courses ON (enrolled_courses.course_id = courses.id)
@@ -20,22 +20,31 @@ const getAllEnrolledCourses = async (
       JOIN semesters ON (enrolled_courses.semester_id = semesters.id)
     `
 
-    const allEnrolledCoursesRaw = await pool.query(QUERY)
-    const allEnrolledCourses = serialize(allEnrolledCoursesRaw.rows)
-
-    let filteredCourses = allEnrolledCourses
+    // WHERE coalesce(students.first_name, '') || ' ' || coalesce(students.middle_name, '')  || coalesce(students.last_name, '')
     if (combinedQuery.length > 0) {
-      filteredCourses = filteredCourses.filter(
-        (enrolledCourse: iEnrolledCourse) => {
-          return combinedStudentAndOrCourseIsFound(
-            enrolledCourse,
-            combinedQuery
-          )
-        }
-      )
+      COMBINED_QUERY = `
+        ${COMBINED_QUERY}
+        WHERE coalesce(students.first_name, '') || ' ' || coalesce(students.middle_name, '')  || coalesce(students.last_name, '') || ' ' || coalesce(courses.name, '')
+        ILIKE '%${combinedQuery}%'
+      `
     }
 
-    return res.status(200).json(filteredCourses)
+    const allEnrolledCoursesRaw = await pool.query(COMBINED_QUERY)
+    const allEnrolledCourses = serialize(allEnrolledCoursesRaw.rows)
+
+    // let filteredCourses = allEnrolledCourses
+    // if (combinedQuery.length > 0) {
+    //   filteredCourses = filteredCourses.filter(
+    //     (enrolledCourse: iEnrolledCourse) => {
+    //       return combinedStudentAndOrCourseIsFound(
+    //         enrolledCourse,
+    //         combinedQuery
+    //       )
+    //     }
+    //   )
+    // }
+
+    return res.status(200).json(allEnrolledCourses)
   } catch (err) {
     console.error(err.message)
     return res.json({
